@@ -53,6 +53,8 @@ bringInRequirements <- function() {
     installIfNotExists("gridExtra")
     installIfNotExists("kernlab")
     installIfNotExists("RSNNS")
+    installIfNotExists("Hmisc")
+    installIfNotExists("quantmod")
 }
 
 clearWorkspace <- function(setSeed = TRUE) {
