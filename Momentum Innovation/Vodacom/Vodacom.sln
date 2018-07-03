@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{DA7A21FA-8162-4350-AD77-A8D1B671F3ED}") = "Vodacom", "Vodacom\Vodacom.rxproj", "{CE4E5FFE-C9A5-448C-8339-9FE95578D8B4}"
 EndProject
+Project("{DA7A21FA-8162-4350-AD77-A8D1B671F3ED}") = "All", "All\All.rxproj", "{8BAD83A5-925A-4174-B2DF-23C78D0EA893}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{CE4E5FFE-C9A5-448C-8339-9FE95578D8B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE4E5FFE-C9A5-448C-8339-9FE95578D8B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE4E5FFE-C9A5-448C-8339-9FE95578D8B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BAD83A5-925A-4174-B2DF-23C78D0EA893}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BAD83A5-925A-4174-B2DF-23C78D0EA893}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BAD83A5-925A-4174-B2DF-23C78D0EA893}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BAD83A5-925A-4174-B2DF-23C78D0EA893}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
