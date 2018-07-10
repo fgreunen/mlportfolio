@@ -7,6 +7,9 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="7.1.1" />
+    <PackageReference Include="ILNumerics" Version="4.8.0" />
+    <PackageReference Include="Microsoft.Solver.Foundation" Version="3.1.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
     <PackageReference Include="System.Console" Version="4.3.1" />
   </ItemGroup>
 

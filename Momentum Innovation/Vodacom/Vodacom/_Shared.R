@@ -54,7 +54,10 @@ bringInRequirements <- function() {
     installIfNotExists("kernlab")
     installIfNotExists("RSNNS")
     installIfNotExists("Hmisc")
+    installIfNotExists("Hmisc")
     installIfNotExists("quantmod")
+    installIfNotExists("RMongo")
+    installIfNotExists("rjson")
 }
 
 clearWorkspace <- function(setSeed = TRUE) {
@@ -71,4 +74,3 @@ removeHighlyCorrelatedFeatures <- function(working) {
     working <- working[, !apply(tmp, 2, function(x) any(x > 0.995))]
     return(working)
 }
-

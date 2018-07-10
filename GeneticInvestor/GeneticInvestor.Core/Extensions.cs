@@ -7,20 +7,20 @@ namespace GeneticInvestor.Core
 {
     public static class Extensions
     {
-        public static float StdDev(this IEnumerable<float> values)
+        public static double StdDev(this IEnumerable<double> values)
         {
-            float ret = 0;
+            double ret = 0;
             int count = values.Count();
             if (count > 1)
             {
                 //Compute the Average
-                float avg = values.Average();
+                double avg = values.Average();
 
                 //Perform the Sum of (value-avg)^2
-                float sum = values.Sum(d => (d - avg) * (d - avg));
+                double sum = values.Sum(d => (d - avg) * (d - avg));
 
                 //Put it all together
-                ret = (float)Math.Sqrt(sum / count);
+                ret = Math.Sqrt(sum / count);
             }
             return ret;
         }

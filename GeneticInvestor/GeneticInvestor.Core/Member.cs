@@ -4,30 +4,29 @@ namespace GeneticInvestor.Core
 {
     public class Member
     {
-        private const double CROSSOVER_CHANCE = 0.9;
+        private const double CROSSOVER_CHANCE = 0.95;
         static Random random = new Random();
 
         public int Rank { get; set; }
-        public float[] Chromosome { get; private set; }
-        private readonly Func<float[], float> _fitnessFunction;
+        public double[] Chromosome { get; private set; }
+        private readonly Func<double[], double> _fitnessFunction;
 
-        public Member(float[] chromosome, Func<float[], float> fitnessFunction)
+        public Member(double[] chromosome, Func<double[], double> fitnessFunction)
         {
             Chromosome = chromosome;
             _fitnessFunction = fitnessFunction;
         }
 
-        public float Fitness()
+        public double Fitness()
         {
             return _fitnessFunction(Chromosome);
         }
 
         public Member Breed(Member other)
         {
-            float[] newChromosome = new float[Chromosome.Length];
+            double[] newChromosome = new double[Chromosome.Length];
             for (var i = 0; i < Chromosome.Length; i++)
-                if (random.NextDouble() <= CROSSOVER_CHANCE)
-                    newChromosome[i] = (0.65f * Chromosome[i] + 0.35f * other.Chromosome[i]);
+                newChromosome[i] = (0.55 * Chromosome[i] + 0.45 * other.Chromosome[i]);
             return new Member(newChromosome, _fitnessFunction);
         }
     }

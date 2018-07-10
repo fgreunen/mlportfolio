@@ -6,51 +6,28 @@ namespace GeneticInvestor.Core
 {
     public static class Trainer
     {
-        private const int RUNS = 1;
+        private const int RUNS = 2;
         private static Random random = new Random();
-        private static float GetRandomNumber(double minimum, double maximum)
+        private static double GetRandomNumber(double minimum, double maximum)
         {
-            return (float)(random.NextDouble() * (maximum - minimum) + minimum);
+            return (random.NextDouble() * (maximum - minimum) + minimum);
         }
 
-        private static Member _Train(List<AllocationRun> examples, float[] returns, float[][] values, Func<float[], float> fitnessFunc, int iterations)
+        private static Member _Train(double[] returns, double[][] values, Func<double[], double> fitnessFunc, int iterations)
         {
-            //Func<float[], float> fitnessFunc = (chromosome) =>
-            //{
-            //    var valueWeights = new float[returns.Length];
-            //    for (int i = 0; i < returns.Length; i++)
-            //    {
-            //        float weight = 0;
-            //        for (var j = 0; j < values[i].Length; j++)
-            //            weight += chromosome[j] * values[i][j];
-            //        valueWeights[i] = weight;
-            //    }
-            //    var total = valueWeights.Sum();
-
-            //    float fitnessValue = 0;
-            //    for (var i = 0; i < returns.Length; i++)
-            //        fitnessValue += returns[i] * (valueWeights[i] / total);
-            //    return fitnessValue;
-            //};
-
-            var min = 0;
-            var max = 1;
-            var popSize = 50;
-            float[][] chromosomes = new float[popSize][];
+            var min = 1;
+            var max = 1.4;
+            var popSize = 90;
+            double[][] chromosomes = new double[popSize][];
             for (var i = 0; i < chromosomes.Length; i++)
             {
-                float[] chromosome = new float[]
-                {
-                    GetRandomNumber(min, max),
-                    GetRandomNumber(min, max),
-                    GetRandomNumber(min, max),
-                    GetRandomNumber(min, max),
-                    GetRandomNumber(min, max),
-                };
+                double[] chromosome = new double[values.Length];
+                for (int j = 0; j < values.Length; j++)
+                    chromosome[j] = GetRandomNumber(min, max);
                 chromosomes[i] = chromosome;
             }
-            float mutationRate = 0.03f;
-            float mutation = 0.25f;
+            double mutationRate = 0.1f;
+            double mutation = 0.08f;
             bool allowNegative = false;
 
             var population = new Population(chromosomes, fitnessFunc, mutationRate, mutation, allowNegative);
@@ -60,12 +37,24 @@ namespace GeneticInvestor.Core
             return population.BestMember;
         }
 
-        public static List<Member> Train(List<AllocationRun> examples, float[] returns, float[][] values, Func<float[], float> fitnessFunc, int iterations = 1000)
+        public static Member Train(double[] returns, double[][] values, Func<double[], double> fitnessFunc, int iterations = 1000)
         {
             var results = new List<Member>();
             for (int i = 0; i < RUNS; i++)
-                results.Add(_Train(examples, returns, values, fitnessFunc, iterations));
-            return results;
+                results.Add(_Train(returns, values, fitnessFunc, iterations));
+
+            results.ForEach(x =>
+            {
+                double total = x.Chromosome.Sum();
+                for (int i = 0; i < x.Chromosome.Length; i++)
+                    x.Chromosome[i] = x.Chromosome[i] / total;
+            });
+
+            double[] averageChromosome = new double[values.Length];
+            for (int i = 0; i < values.Length; i++)
+                averageChromosome[i] = results.Select(x => x.Chromosome[i]).Average();
+
+            return new Member(averageChromosome, fitnessFunc);
         }
     }
 }

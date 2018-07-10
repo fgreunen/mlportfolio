@@ -11,7 +11,7 @@ data <- data[order(data$Dates),]
 
 if (OUT_TO_DISK) png(filename = "images/StylesAcrossTime.png", width = 8, height = 8, units = "in", res = 400)
 plot(PX_CLOSE_1D ~ Dates, data, type = "l", ylab = "Normalized Range",
-     main = "Styles across time")
+     main = "Styles across time (VOD)")
 lines(STYLE_VALUE ~ Dates, data, type = "l", col = "red", lwd = 2)
 lines(STYLE_QUALITY ~ Dates, data, type = "l", col = "green", lwd = 2)
 lines(STYLE_MOMENTUM ~ Dates, data, type = "l", col = "blue", lwd = 2)

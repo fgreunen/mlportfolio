@@ -1,106 +1,134 @@
-﻿using CsvHelper;
-using GeneticInvestor.Core;
+﻿using GeneticInvestor.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace GeneticInvestor.Console
 {
     public class Program
     {
+        public static double[] GetFreeFloater(int length, int index)
+        {
+            double[] freeFloatings = new double[length];
+            for (int i = 0; i < freeFloatings.Length; i++) freeFloatings[i] = index == i ? 1 : 0;
+            return freeFloatings;
+        }
+
         public static void Main(string[] args)
         {
-            const string outputPath = @"C:\Working\results.csv";
-            var files = Directory.EnumerateFiles(@"C:\Working\Inputs_Returns").ToList();
-
-            ConcurrentBag<TrainResult> results = new ConcurrentBag<TrainResult>();
-            Parallel.For(0, files.Count, file =>
+            try
             {
-                //for (int j = 55; j < 56; j++)
-                //{
-                var filename = files[file];
-                var lines = File.ReadAllLines(filename);
-                List<AllocationRun> allocationRuns = new List<AllocationRun>();
-                for (int i = 1; i < lines.Length; i++)
-                    if (!string.IsNullOrEmpty(lines[i]))
-                        allocationRuns.Add(new AllocationRun(filename, lines[i].Trim().Split(",")));
-
-                float[] returns = allocationRuns.Select(x => x.RETURNS).ToArray();
-                float[][] values =
+                const double REGULARIZATION_COEFFICIENT = 0.000025;
+                var inputs = Mongo.GetInputs();
+                var outputs = new ConcurrentBag<Output>();
+                foreach (var input in inputs)
                 {
-                    allocationRuns.Select(x => x.PX_TO_SALES_RATIO).ToArray(),
-                    allocationRuns.Select(x => x.CASH_FLOW_YIELD).ToArray(),
-                    allocationRuns.Select(x => x.EARN_YLD).ToArray(),
-                    allocationRuns.Select(x => x.EQY_DVD_YLD_12M).ToArray(),
-                    allocationRuns.Select(x => x.PX_TO_BOOK_RATIO).ToArray()
-                };
-
-                Func<float[], float> returnsFunc = (chromosome) =>
-                {
-                    var valueWeights = new float[returns.Length];
-                    for (int i = 0; i < returns.Length; i++)
+                    double[] returns = input.VALUES.TARGET.ToArray();
+                    double[][] values =
                     {
-                        float weight = 0;
-                        for (var j = 0; j < values[i].Length; j++)
-                            weight += chromosome[j] * values[i][j];
-                        valueWeights[i] = weight;
-                    }
-                    var weightsTotal = valueWeights.Sum();
+                        input.VALUES.EARN_YLD.ToArray(),
+                        input.VALUES.EQY_DVD_YLD_12M.ToArray(),
+                        input.VALUES.PX_TO_SALES_RATIO.ToArray(),
+                        input.VALUES.CASH_FLOW_YIELD.ToArray(),
+                        input.VALUES.PX_TO_BOOK_RATIO.ToArray(),
+                        //input.VALUES.OPER_INC_TO_NET_SALES.ToArray(),
+                        //input.VALUES.MOMENTUM_1_MONTH.ToArray(),
+                        //input.VALUES.MOMENTUM_2_WEEKS.ToArray(),
+                        //input.VALUES.SALES_3YR_AVG_GROWTH.ToArray(),
+                        //input.VALUES.MOMENTUM_6_MONTH.ToArray(),
+                        //GetFreeFloater(returns.Length, 0),
+                        //GetFreeFloater(returns.Length, 1),
+                        //GetFreeFloater(returns.Length, 2),
+                        //GetFreeFloater(returns.Length, 3),
+                    };
 
-                    float fitnessValue = 0;
-                    for (var i = 0; i < returns.Length; i++)
-                        fitnessValue += returns[i] * (valueWeights[i] / weightsTotal);
-                    return fitnessValue;
-                };
+                    Func<double[], double> targetFunc = (chromosome) =>
+                    {
+                        var valueWeights = new double[returns.Length];
+                        for (int i = 0; i < returns.Length; i++)
+                        {
+                            double weight = 0;
+                            for (var j = 0; j < chromosome.Length; j++)
+                                weight += chromosome[j] * values[j][i];
+                            valueWeights[i] = weight;
+                        }
+                        var weightsTotal = valueWeights.Sum();
 
-                var members = Trainer.Train(allocationRuns, returns, values, returnsFunc, 250).ToList();
-                var index = Math.Max((members.Count / 2) - 1, 0);
-                var member = members[index];
+                        double fitnessValue = 0;
+                        for (var i = 0; i < returns.Length; i++)
+                            fitnessValue += returns[i] * (valueWeights[i] / weightsTotal);
+                        return (float)fitnessValue;
+                    };
 
-                var meanReturn = allocationRuns.Select(x => x.RETURNS).Average();
-                var maxReturn = allocationRuns.Select(x => x.RETURNS).Max();
-                var minReturn = allocationRuns.Select(x => x.RETURNS).Min();
-                var sdReturn = allocationRuns.Select(x => x.RETURNS).StdDev();
-                var maxFitness = member.Fitness();
-                var total = member.Chromosome.Sum();
-                var bestReturns = returnsFunc(member.Chromosome);
+                    Func<double[], double> fitnessFunc = (chromosome) =>
+                    {
+                        var valueWeights = new double[returns.Length];
+                        for (int i = 0; i < returns.Length; i++)
+                        {
+                            double weight = 0;
+                            for (var j = 0; j < chromosome.Length; j++)
+                                weight += chromosome[j] * values[j][i];
+                            valueWeights[i] = weight;
+                        }
+                        var weightsTotal = valueWeights.Sum();
 
-                var trainResult = new TrainResult
-                {
-                    Timestamp = allocationRuns[0].Timestamp,
-                    MaxReturns = maxReturn,
-                    MinReturns = minReturn,
-                    MeanReturns = meanReturn,
-                    StdDevReturns = sdReturn,
-                    Returns = bestReturns,
-                    PX_TO_SALES_RATIO = member.Chromosome[0],
-                    S_PX_TO_SALES_RATIO = member.Chromosome[0] / total,
-                    CASH_FLOW_YIELD = member.Chromosome[1],
-                    S_CASH_FLOW_YIELD = member.Chromosome[1] / total,
-                    EARN_YLD = member.Chromosome[2],
-                    S_EARN_YLD = member.Chromosome[2] / total,
-                    EQY_DVD_YLD_12M = member.Chromosome[3],
-                    S_EQY_DVD_YLD_12M = member.Chromosome[3] / total,
-                    PX_TO_BOOK_RATIO = member.Chromosome[4],
-                    S_PX_TO_BOOK_RATIO = member.Chromosome[4] / total
-                };
-                results.Add(trainResult);
-                System.Console.WriteLine($"Progress: {results.Count / (float)files.Count}");
-                //}
-            });
-            var listResults = results.ToList().OrderBy(x => x.Timestamp);
+                        double fitnessValue = 0;
+                        for (var i = 0; i < returns.Length; i++)
+                            fitnessValue += returns[i] * (valueWeights[i] / weightsTotal);
 
-            if (File.Exists(outputPath)) File.Delete(outputPath);
-            using (var writer = new StreamWriter(outputPath))
+                        double penalty = REGULARIZATION_COEFFICIENT * chromosome.Sum();
+                        return (float)(fitnessValue - penalty);
+                    };
+
+                    //var list = new List<double>();
+                    //for (int i = 0; i < 1; i++)
+                    //{
+                        var member = Trainer.Train(returns, values, fitnessFunc, 750);
+                        var total = member.Chromosome.Sum();
+                        var fitness = targetFunc(member.Chromosome);
+                        var output = new Output
+                        {
+                            ACTUAL_TARGET = fitness,
+                            MEAN_TARGET = input.VALUES.TARGET.Average(),
+                            T_START = input.T_START,
+                            T_END = input.T_END,
+                            T_USEFROM = input.T_USEFROM,
+                            EARN_YLD = member.Chromosome[0] / total,
+                            EQY_DVD_YLD_12M = member.Chromosome[1] / total,
+                            PX_TO_SALES_RATIO = member.Chromosome[2] / total,
+                            CASH_FLOW_YIELD = member.Chromosome[3] / total,
+                            PX_TO_BOOK_RATIO = member.Chromosome[4] / total,
+                            //OPER_INC_TO_NET_SALES = member.Chromosome[5] / total,
+                            //MOMENTUM_1_MONTH = member.Chromosome[6] / total,
+                            //MOMENTUM_2_WEEKS = member.Chromosome[7] / total,
+                            //SALES_3YR_AVG_GROWTH = member.Chromosome[8] / total,
+                            //MOMENTUM_6_MONTH = member.Chromosome[9] / total,
+                            //FREE_FLOATER_1 = member.Chromosome[10] / total,
+                            //FREE_FLOATER_2 = member.Chromosome[11] / total,
+                            //FREE_FLOATER_3 = member.Chromosome[12] / total,
+                            //FREE_FLOATER_4 = member.Chromosome[13] / total,
+                        };
+                    //    list.Add(member.Chromosome[0] / total);
+                    //    System.Console.WriteLine($"{member.Chromosome[0] / total} | {fitness}");
+                    //}
+                    //System.Console.WriteLine();
+                    //System.Console.WriteLine(list.Average());
+                    //System.Console.WriteLine(list.StdDev());
+
+                    outputs.Add(output);
+                    System.Console.WriteLine($"Progress: {outputs.Count / (float)inputs.Count}");
+                }
+
+                Mongo.SetOutputs(outputs.OrderBy(x => x.T_START).ToList());
+            }
+            catch (Exception ex)
             {
-                var csv = new CsvWriter(writer);
-                csv.WriteRecords(listResults);
+                System.Console.WriteLine(ex);
             }
 
             System.Console.WriteLine("DONE");
+
             System.Console.ReadKey();
         }
     }

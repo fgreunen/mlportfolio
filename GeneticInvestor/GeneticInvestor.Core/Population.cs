@@ -7,8 +7,8 @@ namespace GeneticInvestor.Core
     {
         private Random _rnd = new Random();
         private int _chromosomeLength;
-        private float _mutationRate;
-        private float _mutationAmount;
+        private double _mutationRate;
+        private double _mutationAmount;
         private Member[] _members;
         private bool _allowNegative;
         private int _rankSum;
@@ -21,9 +21,9 @@ namespace GeneticInvestor.Core
         }
 
         public Population(
-            float[][] chromosomes, Func<float[], float> fitnessFunction,
-            float mutationRate = 0.025f,
-            float mutationAmount = 0.5f,
+            double[][] chromosomes, Func<double[], double> fitnessFunction,
+            double mutationRate = 0.02f,
+            double mutationAmount = 0.4f,
             bool allowNegative = false)
         {
             _allowNegative = allowNegative;
@@ -49,9 +49,11 @@ namespace GeneticInvestor.Core
             }
             _members = newMembers;
             Mutate();
+            _mutationRate *= 0.99975;
+            _mutationAmount *= 0.99999;
         }
 
-        public float GetMaxFitness()
+        public double GetMaxFitness()
         {
             return _members.Last().Fitness();
         }
@@ -73,7 +75,7 @@ namespace GeneticInvestor.Core
             for (var i = 0; i < _members.Length; i++)
                 for (var j = 0; j < _chromosomeLength; j++)
                     if (_rnd.NextDouble() <= _mutationRate)
-                        _members[i].Chromosome[j] += (_rnd.NextDouble() < 0.5 ? 1 : (_allowNegative ? -1 : 1)) * (float)(_rnd.NextDouble() * _mutationAmount);
+                        _members[i].Chromosome[j] += (_rnd.NextDouble() < 0.5 ? 1 : (_allowNegative ? -1 : 1)) * _mutationAmount;
             SortMembers();
         }
 
